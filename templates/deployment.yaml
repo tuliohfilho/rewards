@@ -1,0 +1,94 @@
+{{- if .Values.deployment.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    {{- include "deployment.metadata.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.application.replicas }}
+  selector:
+    {{- include "deployment.spec.selector" . | nindent 8 }}
+  strategy:
+    {{- include "deployment.spec.strategy" . | nindent 4 }}
+  template:
+    metadata:
+      labels:
+        {{- include "deployment.metadata.labels" . | nindent 8 }}
+      annotations:
+        {{- include "deployment.spec.template.metadata.annotations" . | nindent 8 }}
+    spec:
+      nodeSelector:
+        agentpool: {{ .Values.application.agentpool }}
+      tolerations:
+        {{- include "deployment.spec.template.spec.tolerations" . | nindent 8 }}
+      containers:
+        - name: {{ .Values.application.name }}-container
+          image: "{{ .Values.container.image.name }}:{{ .Values.container.image.tag }}"
+          readinessProbe:
+            {{- include "deployment.spec.template.spec.containers.readinessProbe" . | nindent 12 }}
+          livenessProbe:
+            {{- include "deployment.spec.template.spec.containers.livenessProbe" . | nindent 12 }}
+          resources:
+            {{- include "deployment.spec.template.spec.containers.resources" . | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.container.port }}
+              protocol: TCP
+          env:
+            - name: LOGGING__LOGLEVEL__DEFAULT
+              value: #{_env-loglevel-default_}#
+            - name: DD_ENV
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['tags.datadoghq.com/env']
+            - name: DD_SERVICE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['tags.datadoghq.com/service']
+            - name: DD_VERSION
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['tags.datadoghq.com/version']
+            - name: DD_RUNTIME_METRICS_ENABLED
+              value: "true"
+            - name: DD_TRACE_ANALYTICS_ENABLED
+              value: #{_dd-trace-analytics-enabled_}#
+            - name: DD_TRACE_DEBUG
+              value: #{_dd-trace-debug_}#
+            - name: DD_TAGS
+              value: 'source:"csharp"'
+            - name: DATADOG_APP_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: datadog-secret
+                  key: api-key
+            - name: DD_AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.hostIP
+            
+            - name: AZURE_TENANT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: azure-secret
+                  key: tenant-id
+            - name: AZURE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: azure-secret
+                  key: client-id
+            - name: AZURE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: azure-secret
+                  key: client-secret
+            - name: ConnectionStrings__AppConfig
+              valueFrom:
+                secretKeyRef:
+                  name: app-config-secret
+                  key: connection-string    
+      imagePullSecrets:
+        - name: {{ .Values.application.dockerAuthSecret }}
+{{ end -}}

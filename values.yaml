@@ -1,0 +1,55 @@
+deployment:
+  enabled: false
+service:
+  enabled: true
+secret:
+  enabled: false
+test:
+  enabled: false
+
+
+application:
+  name: rewards-bff-api
+  replicas: 1
+  agentpool: '#{_agentpool_}#'
+  dockerAuthSecret: docker-ambevdevs-registry
+
+container:
+  port: 80
+  image:
+    name: docker.ambevdevs.com.br/ambev-dtc-martech-rewards-bff-api
+    tag: '#{_IMAGETAG_}#'
+  limit:
+    cpu: '#{_resource-limits-cpu_}#'
+    memory: '#{_resource-limits-mem_}#'
+  require:
+    cpu: '#{_resource-requests-cpu_}#'
+    memory: '#{_resource-requests-mem_}#'
+  datadog:
+    env: '#{_dd-env_}#'
+
+secrets: [
+  {
+    name: app-config-secret,
+    type: Opaque,
+    data: [
+      '#{_pp-config-secret-connection-string_}#'
+    ]
+  },
+  {
+    name: azure-secret,
+    type: Opaque,
+    data: [
+      'tenant-id: #{_azure-secret-tenant-id_}#',
+      'client-id: #{_azure-secret-client-id_}#',
+      'client-secret: #{_azure-secret-client-secret_}#'
+    ]
+  },
+  {
+    name: datadog-secret,
+    type: Opaque,
+    data: [
+      'api-key: #{_datadog-secret-api-key_}#'
+    ]
+  }
+]
