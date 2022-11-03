@@ -1,0 +1,14 @@
+apiVersion: v1
+entries:
+  rewards-api:
+  - apiVersion: v2
+    appVersion: 0.0.1
+    created: "2022-11-03T12:20:50.236906-03:00"
+    description: A Helm chart for Kubernetes
+    digest: 46eb5fe9a89cfb1c4c1e9f428be51f1c7c580261e66b40e355aafc9a81e7be4c
+    name: rewards-api
+    type: application
+    urls:
+    - rewards-api-0.1.0.tgz
+    version: 0.1.0
+generated: "2022-11-03T12:20:50.2363385-03:00"
